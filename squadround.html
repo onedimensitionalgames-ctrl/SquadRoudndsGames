@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SquadRound Industries</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#02020e;--glass:rgba(255,255,255,0.04);--glass2:rgba(255,255,255,0.07);
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.13);
+  --cyan:#00f0ff;--cyan-dim:rgba(0,240,255,0.5);--cyan-bg:rgba(0,240,255,0.08);
+  --cyan-border:rgba(0,240,255,0.25);--cyan-glow:rgba(0,240,255,0.15);
+  --font-hud:'JetBrains Mono',monospace;
+  --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+  --purple:rgba(139,92,246,1);--red:rgba(239,68,68,1);
+  --green:rgba(52,211,153,1);--amber:rgba(245,158,11,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:#e2e8f0;font-family:var(--font-body);overflow-x:hidden;min-height:100vh;cursor:default}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:#0a0a20}
+::-webkit-scrollbar-thumb{background:rgba(0,240,255,0.3);border-radius:2px}
+
+/* ── BG LAYERS ── */
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,240,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,240,255,.022) 1px,transparent 1px);
+  background-size:52px 52px}
+.bg-scan{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.15) 3px,rgba(0,0,0,.15) 4px)}
+.orb{position:fixed;border-radius:50%;filter:blur(110px);opacity:.11;pointer-events:none;z-index:0;transition:all 2s}
+.orb1{width:580px;height:580px;background:#6d28d9;top:-8%;left:-8%}
+.orb2{width:440px;height:440px;background:#0891b2;bottom:15%;right:-5%}
+.orb3{width:320px;height:320px;background:#b45309;top:55%;left:25%}
+
+/* ── CURSOR ── */
+#cursor{position:fixed;width:26px;height:26px;border:1px solid rgba(0,240,255,.5);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:all .08s linear;mix-blend-mode:screen}
+
+/* ── PROGRESS BAR ── */
+#nprogress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--cyan),#7c3aed);z-index:9998;transition:width .4s ease;width:0}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:14px 20px}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;
+  padding:11px 22px;background:rgba(2,2,14,.88);backdrop-filter:blur(28px);
+  border:1px solid rgba(255,255,255,.07);border-radius:100px;
+  box-shadow:0 0 40px rgba(0,240,255,.04),0 2px 30px rgba(0,0,0,.6)}
+.nav-logo{display:flex;align-items:center;gap:10px;cursor:pointer;border:none;background:transparent;color:inherit}
+.nav-logo-mark{width:32px;height:32px;border-radius:9px;background:rgba(0,240,255,.09);
+  border:1px solid rgba(0,240,255,.22);display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:var(--cyan);font-family:var(--font-hud)}
+.nav-wordmark{font-family:var(--font-head);font-weight:800;font-size:14px;letter-spacing:-.02em;text-transform:uppercase}
+.nav-wordmark span{color:var(--cyan)}
+.nav-links{display:flex;gap:2px}
+@media(max-width:700px){.nav-links{display:none}}
+.nav-lnk{border:none;background:transparent;cursor:pointer;
+  padding:8px 13px;border-radius:100px;
+  font-family:var(--font-hud);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(226,232,240,.38);border:1px solid transparent;transition:all .18s}
+.nav-lnk:hover{color:#e2e8f0;background:rgba(255,255,255,.04)}
+.nav-lnk.active{color:var(--cyan);background:rgba(0,240,255,.08);
+  border-color:rgba(0,240,255,.2);box-shadow:0 0 14px rgba(0,240,255,.08)}
+.nav-cta{border:none;cursor:pointer;padding:9px 20px;border-radius:100px;
+  background:rgba(0,240,255,.1);border:1px solid rgba(0,240,255,.3);
+  font-family:var(--font-hud);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--cyan);transition:all .18s;box-shadow:0 0 14px rgba(0,240,255,.08)}
+.nav-cta:hover{background:rgba(0,240,255,.18);box-shadow:0 0 26px rgba(0,240,255,.2)}
+
+/* ── PAGES ── */
+.page{position:relative;z-index:2;padding:108px 20px 80px;max-width:1200px;margin:0 auto;
+  animation:pageIn .35s ease forwards}
+@keyframes pageIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.hidden{display:none}
+
+/* ── HUD TEXT ── */
+.hud{font-family:var(--font-hud);font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(0,240,255,.5);display:inline-flex;align-items:center;gap:7px}
+.hud::before{content:'›';color:var(--cyan);font-size:12px}
+.sec-title{font-family:var(--font-head);font-weight:800;font-size:clamp(40px,8vw,86px);
+  text-transform:uppercase;letter-spacing:-.04em;line-height:.88;color:#fff;margin:12px 0 8px}
+.sec-sub{color:rgba(226,232,240,.45);font-size:15px;line-height:1.7;max-width:560px;margin-top:8px}
+
+/* ── GLASS ── */
+.glass{background:var(--glass);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:18px}
+.glass2{background:var(--glass2);backdrop-filter:blur(22px);border:1px solid var(--border2);border-radius:18px}
+.glass-hover{transition:all .22s}
+.glass-hover:hover{background:var(--glass2);border-color:rgba(0,240,255,.18);
+  transform:translateY(-3px);box-shadow:0 14px 44px rgba(0,240,255,.07)}
+
+/* ── HUD CORNERS ── */
+.hud-box{position:relative}
+.hud-box::before,.hud-box::after{content:'';position:absolute;width:13px;height:13px;border-color:rgba(0,240,255,.3)}
+.hud-box::before{top:-1px;left:-1px;border-top:2px solid;border-left:2px solid}
+.hud-box::after{bottom:-1px;right:-1px;border-bottom:2px solid;border-right:2px solid}
+
+/* ── GLITCH ── */
+.glitch{position:relative}
+.glitch::before,.glitch::after{content:attr(data-t);position:absolute;top:0;left:0;width:100%;height:100%;font-family:inherit;font-size:inherit;font-weight:inherit;opacity:0}
+.glitch::before{color:#ff00cc;animation:glitch1 5s infinite}
+.glitch::after{color:#00f0ff;animation:glitch2 5s infinite}
+@keyframes glitch1{0%,88%,100%{opacity:0;clip-path:none;transform:none}
+  89%{opacity:.75;clip-path:inset(28% 0 56% 0);transform:translate(-3px)}
+  91%{clip-path:inset(72% 0 8% 0);transform:translate(3px)}
+  93%{clip-path:inset(8% 0 83% 0);transform:translate(-2px)}
+  95%{opacity:0}}
+@keyframes glitch2{0%,91%,100%{opacity:0;clip-path:none;transform:none}
+  92%{opacity:.75;clip-path:inset(52% 0 38% 0);transform:translate(3px)}
+  94%{clip-path:inset(18% 0 68% 0);transform:translate(-3px)}
+  97%{clip-path:inset(82% 0 3% 0);transform:translate(2px)}
+  99%{opacity:0}}
+
+/* ── ANIMATIONS ── */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(0,240,255,.45)}70%{box-shadow:0 0 0 11px rgba(0,240,255,0)}100%{box-shadow:0 0 0 0 rgba(0,240,255,0)}}
+@keyframes scanLine{0%{top:-5%}100%{top:108%}}
+@keyframes stagger{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+.float{animation:float 5.5s ease-in-out infinite}
+.pulse{animation:ping 2s infinite}
+
+/* ── INPUTS ── */
+.inp{background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:11px;
+  padding:13px 15px;color:#e2e8f0;font-family:var(--font-body);font-size:14px;
+  width:100%;outline:none;transition:border-color .2s,box-shadow .2s;
+  font-weight:400}
+.inp:focus{border-color:rgba(0,240,255,.35);box-shadow:0 0 0 2px rgba(0,240,255,.07)}
+.inp option{background:#0a0a1a}
+textarea.inp{resize:vertical;min-height:110px}
+
+/* ── BUTTONS ── */
+.btn{border:none;cursor:pointer;font-family:var(--font-hud);transition:all .2s;font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+.btn-cyan{background:rgba(0,240,255,.1);border:1px solid rgba(0,240,255,.35);
+  color:var(--cyan);padding:13px 28px;border-radius:10px;
+  box-shadow:0 0 14px rgba(0,240,255,.08)}
+.btn-cyan:hover{background:rgba(0,240,255,.2);box-shadow:0 0 28px rgba(0,240,255,.2)}
+.btn-ghost{background:transparent;border:none;color:rgba(226,232,240,.38);cursor:pointer;
+  font-family:var(--font-hud);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;transition:color .2s}
+.btn-ghost:hover{color:#e2e8f0}
+.btn-red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);
+  color:#f87171;padding:13px 28px;border-radius:10px}
+.btn-red:hover{background:rgba(239,68,68,.2)}
+.btn-purple{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);
+  color:#a78bfa;padding:13px 28px;border-radius:10px}
+.btn-purple:hover{background:rgba(139,92,246,.2)}
+
+/* ── STATUS ── */
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--cyan)}
+.dot.pulse{animation:ping 1.9s infinite}
+
+/* ── TAG ── */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;
+  font-family:var(--font-hud);font-size:8px;letter-spacing:.15em;text-transform:uppercase}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.gauto{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+@media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* ── TICKER ── */
+.ticker-wrap{overflow:hidden;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);padding:9px 0;margin-bottom:52px}
+.ticker-inner{display:flex;gap:48px;animation:ticker 18s linear infinite;white-space:nowrap;width:max-content}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{font-family:var(--font-hud);font-size:9px;letter-spacing:.25em;color:rgba(226,232,240,.22);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.ticker-item::before{content:'◆';color:rgba(0,240,255,.3);font-size:8px}
+
+/* ── GAME CARDS ── */
+.game-card{border-radius:20px;overflow:hidden;cursor:pointer;border:1px solid var(--border);
+  background:var(--glass);transition:all .28s;position:relative;padding:32px 26px}
+.game-card:hover{transform:translateY(-4px)}
+.game-card-icon{font-size:52px;margin-bottom:20px;display:block;line-height:1;
+  animation:float 5s ease-in-out infinite}
+.game-card-genre{font-family:var(--font-hud);font-size:9px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:8px}
+.game-card-title{font-family:var(--font-head);font-weight:800;font-size:24px;
+  text-transform:uppercase;letter-spacing:-.03em;color:#fff;margin-bottom:8px}
+.game-card-tagline{font-style:italic;font-size:13px;color:rgba(226,232,240,.5);margin-bottom:12px}
+.game-card-desc{font-size:13px;color:rgba(226,232,240,.42);line-height:1.65}
+.game-card-status{position:absolute;top:18px;right:18px;padding:5px 12px;border-radius:100px;
+  font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;text-transform:uppercase}
+
+/* ── ROLE CARDS ── */
+.role-card{border-radius:15px;padding:20px 18px;border:1px solid var(--border);
+  background:var(--glass);transition:all .22s;cursor:pointer}
+.role-card:hover,.role-card.sel{background:var(--glass2);transform:translateY(-2px)}
+.role-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;margin-bottom:14px;font-size:18px}
+
+/* ── REPORT CARD ── */
+.rep-card{padding:22px 22px;border-radius:15px;background:var(--glass);
+  border:1px solid var(--border);border-left-width:3px;margin-bottom:10px}
+
+/* ── SCAN EFFECT ── */
+.scan-wrap{position:relative;overflow:hidden}
+.scan-wrap::after{content:'';position:absolute;left:0;width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,240,255,.35),transparent);
+  animation:scanLine 3.5s linear infinite;pointer-events:none}
+
+/* ── FOOTER ── */
+footer{position:relative;z-index:2;border-top:1px solid rgba(255,255,255,.05);
+  padding:32px 20px;background:rgba(0,0,0,.35)}
+.footer-inner{max-width:1200px;margin:0 auto;display:flex;
+  justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.footer-games{display:flex;gap:16px;flex-wrap:wrap}
+.footer-games span{font-family:var(--font-hud);font-size:8px;letter-spacing:.15em;
+  text-transform:uppercase;opacity:.4;cursor:pointer;transition:opacity .2s}
+.footer-games span:hover{opacity:.8}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="nprogress"></div>
+<div class="bg-grid"></div>
+<div class="bg-scan"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <button class="nav-logo" onclick="showPage('home')">
+      <div class="nav-logo-mark">⟡</div>
+      <div class="nav-wordmark">SquadRound <span>Industries</span></div>
+    </button>
+    <div class="nav-links" id="nav-links"></div>
+    <button class="nav-cta btn" onclick="showPage('careers')">JOIN US</button>
+  </div>
+</nav>
+
+<!-- ══ HOME ══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-home">
+  <div id="status-ticker" class="ticker-wrap">
+    <div class="ticker-inner" id="ticker-inner"></div>
+  </div>
+
+  <!-- Hero -->
+  <div style="margin-bottom:52px">
+    <div class="hud" style="margin-bottom:18px">SQUADROUND.INDUSTRIES // BOOT_SEQUENCE_ACTIVE</div>
+    <h1 style="font-family:var(--font-head);font-size:clamp(72px,14vw,158px);font-weight:800;letter-spacing:-.05em;line-height:.82;text-transform:uppercase;margin-bottom:22px">
+      <span style="color:#fff;display:block;font-style:italic">THE</span>
+      <span class="glitch" data-t="NEXT" style="color:var(--cyan);display:block;font-style:italic;text-shadow:0 0 40px rgba(0,240,255,.4)">NEXT</span>
+      <span style="color:rgba(226,232,240,.8);display:block;font-style:italic">LEVEL</span>
+    </h1>
+    <p style="max-width:440px;color:rgba(226,232,240,.5);font-size:16px;line-height:1.75;margin-bottom:36px">
+      SquadRound Industries is a premier game development studio. Nathan and the squad are crafting immersive worlds that challenge reality.
+    </p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-cyan" onclick="showPage('games')" style="font-size:11px;padding:14px 32px">[ EXPLORE GAMES ]</button>
+      <button class="btn-ghost" onclick="showPage('community')">COMMUNITY PORTAL →</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="g4" style="margin-bottom:64px;max-width:560px">
+    <div class="glass hud-box" style="padding:22px 14px;text-align:center">
+      <div style="font-family:var(--font-hud);font-size:32px;font-weight:700;color:var(--cyan);margin-bottom:5px">04</div>
+      <div style="font-family:var(--font-hud);font-size:8px;letter-spacing:.18em;color:rgba(226,232,240,.3);text-transform:uppercase">TITLES</div>
+    </div>
+    <div class="glass hud-box" style="padding:22px 14px;text-align:center">
+      <div style="font-family:var(--font-hud);font-size:32px;font-weight:700;color:var(--cyan);margin-bottom:5px">08</div>
+      <div style="font-family:var(--font-hud);font-size:8px;letter-spacing:.18em;color:rgba(226,232,240,.3);text-transform:uppercase">MEMBERS</div>
+    </div>
+    <div class="glass hud-box" style="padding:22px 14px;text-align:center">
+      <div style="font-family:var(--font-hud);font-size:32px;font-weight:700;color:var(--cyan);margin-bottom:5px">UE5</div>
+      <div style="font-family:var(--font-hud);font-size:8px;letter-spacing:.18em;color:rgba(226,232,240,.3);text-transform:uppercase">ENGINE</div>
+    </div>
+    <div class="glass hud-box" style="padding:22px 14px;text-align:center">
+      <div style="font-family:var(--font-hud);font-size:32px;font-weight:700;color:var(--cyan);margin-bottom:5px">7</div>
+      <div style="font-family:var(--font-hud);font-size:8px;letter-spacing:.18em;color:rgba(226,232,240,.3);text-transform:uppercase">ROLES</div>
+    </div>
+  </div>
+
+  <!-- Game previews -->
+  <div class="hud" style="margin-bottom:20px">ACTIVE TITLES // 04 IN DEVELOPMENT</div>
+  <div class="g2" id="home-games-grid"></div>
+</div>
+
+<!-- ══ GAMES ══════════════════════════════════════════════════════════════ -->
+<div class="page hidden" id="page-games">
+  <div class="hud" style="margin-bottom:14px">GAME LIBRARY // 04 ACTIVE TITLES</div>
+  <h2 class="sec-title glitch" data-t="The Games">The Games</h2>
+  <p class="sec-sub" style="margin-bottom:44px">Each title has a dedicated team with 7 open roles. Select a game to explore positions.</p>
+
+  <!-- Game tabs -->
+  <div id="game-tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px"></div>
+
+  <!-- Selected game banner -->
+  <div id="game-banner" class="scan-wrap" style="border-radius:22px;padding:36px 30px;margin-bottom:36px;transition:all .3s"></div>
+
+  <!-- Roles -->
+  <div class="hud" style="margin-bottom:18px" id="roles-hud">TEAM POSITIONS // 7 OPEN ROLES</div>
+  <div class="gauto" id="roles-grid"></div>
+</div>
+
+<!-- ══ CAREERS ══════════════════════════════════════════════════════════════ -->
+<div class="page hidden" id="page-careers">
+  <div class="hud" style="margin-bottom:14px">CAREERS // 4 GAMES · 7 ROLES EACH</div>
+  <h2 class="sec-title glitch" data-t="Join Us">Join Us</h2>
+  <p class="sec-sub" style="margin-bottom:44px">Pick your game. Pick your role. Show us what you've got.</p>
+
+  <!-- Step bar -->
+  <div id="careers-steps" style="display:flex;align-items:center;gap:8px;margin-bottom:44px;flex-wrap:wrap"></div>
+
+  <!-- Step panels -->
+  <div id="careers-panel"></div>
+</div>
+
+<!-- ══ COMMUNITY ══════════════════════════════════════════════════════════════ -->
+<div class="page hidden" id="page-community">
+  <div class="hud" style="margin-bottom:14px">COMMUNITY // PLAYER FEEDBACK PORTAL</div>
+  <h2 class="sec-title glitch" data-t="Community">Community</h2>
+  <p class="sec-sub" style="margin-bottom:44px">Report bugs, share suggestions, and help build better games alongside the squad.</p>
+  <div id="community-panel"></div>
+</div>
+
+<!-- ══ CONTACT ══════════════════════════════════════════════════════════════ -->
+<div class="page hidden" id="page-contact">
+  <div class="hud" style="margin-bottom:14px">CONTACT // REACH THE SQUAD</div>
+  <h2 class="sec-title glitch" data-t="Get In Touch">Get In Touch</h2>
+  <p class="sec-sub" style="margin-bottom:44px">Drop a line to the team. We're always listening.</p>
+  <div id="contact-panel"></div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <span style="font-family:var(--font-hud);font-size:8px;color:rgba(226,232,240,.22);letter-spacing:.15em">© 2026 SQUADROUND INDUSTRIES · DIGITAL ARCHITECTS · LEAD: NATHAN</span>
+    <div class="footer-games" id="footer-games"></div>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+const GAMES=[
+  {id:'island-darkness',title:'Island Darkness',tagline:'Survive the cursed shore',
+   genre:'Horror · Single-Player',icon:'◈',
+   color:'#a78bfa',bg:'rgba(139,92,246,.1)',border:'rgba(139,92,246,.3)',glow:'rgba(139,92,246,.12)',
+   desc:'A psychological horror journey through an island that remembers your every mistake. Face your deepest fears alone in the dark.'},
+  {id:'city-haunt',title:'City Haunt',tagline:'No escape from the grid',
+   genre:'Horror · Multiplayer',icon:'◉',
+   color:'#f87171',bg:'rgba(239,68,68,.1)',border:'rgba(239,68,68,.3)',glow:'rgba(239,68,68,.12)',
+   desc:'Asymmetric horror multiplayer in a haunted urban sprawl. Hunt or be hunted through neon-lit streets.'},
+  {id:'pride',title:'Pride',tagline:'Joy encoded in every pixel',
+   genre:'Casual · Fun',icon:'◎',
+   color:'#34d399',bg:'rgba(52,211,153,.1)',border:'rgba(52,211,153,.3)',glow:'rgba(52,211,153,.12)',
+   desc:'A vibrant casual experience celebrating color, creativity, and community. Pure joy, pixel by pixel.'},
+  {id:'emperor-ego',title:'Emperor Ego',tagline:'Conquer. Evolve. Dominate.',
+   genre:'Action · Combat',icon:'◆',
+   color:'#fbbf24',bg:'rgba(245,158,11,.1)',border:'rgba(245,158,11,.3)',glow:'rgba(245,158,11,.12)',
+   desc:'Fast-paced action combat with deep ego-driven progression. Rise or fall by your own hand.'},
+];
+
+const ROLES=[
+  {id:'designer',title:'Game Designer',sub:'Lead Designer',icon:'⬡',
+   desc:'Define mechanics, rules, and the core gameplay loop. Own the player experience from idea to ship.'},
+  {id:'programmer',title:'Programmer',sub:'Engineer',icon:'⟨/⟩',
+   desc:'Build gameplay systems, AI, engine integrations, and the technical architecture that makes it all work.'},
+  {id:'artist',title:'Artist',sub:'2D · 3D · Concept',icon:'◭',
+   desc:'Create visual assets, environments, and concept art. Define the visual language of the game world.'},
+  {id:'animator',title:'Animator',sub:'Motion & Rigging',icon:'⤢',
+   desc:'Bring characters and assets to life with fluid, expressive animation that feels alive.'},
+  {id:'level-designer',title:'Level Designer',sub:'World Builder',icon:'⊞',
+   desc:'Craft maps, layouts, and pacing. Guide the player journey through richly designed spaces.'},
+  {id:'audio',title:'Audio Designer',sub:'Composer · SFX',icon:'♫',
+   desc:'Craft sound effects, music, and immersive audio landscapes that define the game feel.'},
+  {id:'qa',title:'QA Tester',sub:'Quality Assurance',icon:'⊙',
+   desc:'Identify bugs, validate mechanics, and maintain release-ready quality across all builds.'},
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STORAGE (localStorage as persistent key-value)
+// ═══════════════════════════════════════════════════════════════
+const db={
+  get(key){try{const v=localStorage.getItem(key);return v?JSON.parse(v):null}catch{return null}},
+  set(key,val){try{localStorage.setItem(key,JSON.stringify(val));return true}catch{return false}},
+  list(prefix){try{return Object.keys(localStorage).filter(k=>k.startsWith(prefix))}catch{return[]}},
+  getAllReports(){
+    const keys=this.list('sqr:report:');
+    return keys.map(k=>this.get(k)).filter(Boolean).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  },
+  saveReport(r){return this.set('sqr:report:'+r.id,r)},
+  saveApp(a){return this.set('sqr:app:'+a.id,a)},
+  saveContact(c){return this.set('sqr:contact:'+c.id,c)},
+};
+
+// ═══════════════════════════════════════════════════════════════
+// NAV / ROUTING
+// ═══════════════════════════════════════════════════════════════
+const NAV=[
+  {id:'home',label:'HOME'},{id:'games',label:'GAMES'},
+  {id:'careers',label:'CAREERS'},{id:'community',label:'COMMUNITY'},{id:'contact',label:'CONTACT'}
+];
+let currentPage='home';
+
+function buildNav(){
+  const c=document.getElementById('nav-links');
+  c.innerHTML=NAV.map(n=>`<button class="nav-lnk btn${n.id===currentPage?' active':''}" onclick="showPage('${n.id}')">${n.label}</button>`).join('');
+}
+
+function showPage(id){
+  document.getElementById('page-'+currentPage).classList.add('hidden');
+  currentPage=id;
+  const el=document.getElementById('page-'+id);
+  el.classList.remove('hidden');
+  el.style.animation='none';el.offsetHeight;el.style.animation='';
+  buildNav();
+  window.scrollTo({top:0,behavior:'smooth'});
+  // Init page content if needed
+  if(id==='games') initGamesPage();
+  if(id==='careers') initCareers();
+  if(id==='community') initCommunity();
+  if(id==='contact') initContact();
+  // Progress bar flash
+  const bar=document.getElementById('nprogress');
+  bar.style.width='0';bar.style.opacity='1';
+  setTimeout(()=>bar.style.width='100%',10);
+  setTimeout(()=>{bar.style.opacity='0';bar.style.width='0'},500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════════════════════
+function initHome(){
+  // Ticker
+  const items=['SYSTEM ONLINE','4 TITLES IN DEV','UE5 ENGINE ACTIVE','HIRING NOW','ISLAND DARKNESS','CITY HAUNT','PRIDE','EMPEROR EGO','REMOTE FRIENDLY','₹15K STIPEND'];
+  const inner=document.getElementById('ticker-inner');
+  inner.innerHTML=[...items,...items].map(t=>`<div class="ticker-item">${t}</div>`).join('');
+
+  // Home game grid
+  const g=document.getElementById('home-games-grid');
+  g.innerHTML=GAMES.map(game=>`
+    <div class="game-card glass-hover scan-wrap"
+      style="background:${game.bg};border-color:${game.border};box-shadow:0 0 40px ${game.glow};cursor:pointer"
+      onclick="showPage('games')">
+      <span class="game-card-icon float" style="color:${game.color}">${game.icon}</span>
+      <div class="game-card-genre" style="color:${game.color}">${game.genre}</div>
+      <div class="game-card-title">${game.title}</div>
+      <div class="game-card-tagline">"${game.tagline}"</div>
+      <div class="game-card-desc">${game.desc}</div>
+      <div class="game-card-status" style="background:${game.bg};border:1px solid ${game.border};color:${game.color}">⬟ IN DEV</div>
+    </div>`).join('');
+
+  // Footer games
+  document.getElementById('footer-games').innerHTML=GAMES.map(g=>`<span style="color:${g.color}" onclick="showPage('games')">${g.title}</span>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAMES PAGE
+// ═══════════════════════════════════════════════════════════════
+let selGame=GAMES[0];
+function initGamesPage(){renderGameTabs();renderGameBanner();renderRoles();}
+function renderGameTabs(){
+  const c=document.getElementById('game-tabs');
+  c.innerHTML=GAMES.map(g=>`
+    <button onclick="selectGame('${g.id}')" style="
+      border:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:9px 16px;border-radius:12px;
+      background:${g.id===selGame.id?g.bg:'transparent'};
+      border:1px solid ${g.id===selGame.id?g.border:'rgba(255,255,255,.07)'};
+      box-shadow:${g.id===selGame.id?`0 0 18px ${g.glow}`:'none'};
+      transition:all .2s;font-family:var(--font-hud);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+      color:${g.id===selGame.id?g.color:'rgba(226,232,240,.35)'}">
+      <span style="font-size:15px">${g.icon}</span>${g.title}</button>`).join('');
+}
+function selectGame(id){selGame=GAMES.find(g=>g.id===id);renderGameTabs();renderGameBanner();renderRoles();}
+function renderGameBanner(){
+  const b=document.getElementById('game-banner');
+  const g=selGame;
+  b.style.cssText=`border-radius:22px;padding:36px 30px;margin-bottom:36px;transition:all .3s;
+    background:${g.bg};border:1px solid ${g.border};box-shadow:0 0 60px ${g.glow};overflow:hidden;position:relative`;
+  b.innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap;position:relative;z-index:1">
+      <span style="font-size:64px;line-height:1;animation:float 5s ease-in-out infinite;color:${g.color}">${g.icon}</span>
+      <div style="flex:1">
+        <div class="hud" style="margin-bottom:10px;color:${g.color}">${g.genre}</div>
+        <h3 class="glitch" data-t="${g.title}" style="font-family:var(--font-head);font-size:clamp(28px,5vw,54px);font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:-.04em;line-height:.88;margin-bottom:10px">${g.title}</h3>
+        <p style="font-style:italic;color:rgba(226,232,240,.55);font-size:15px;margin-bottom:8px">"${g.tagline}"</p>
+        <p style="color:rgba(226,232,240,.45);font-size:14px;line-height:1.7;max-width:560px">${g.desc}</p>
+      </div>
+      <div style="padding:7px 16px;border-radius:100px;background:rgba(0,0,0,.4);border:1px solid ${g.border};
+        font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:${g.color};text-transform:uppercase;white-space:nowrap;align-self:flex-start">⬟ IN DEVELOPMENT</div>
+    </div>`;
+}
+function renderRoles(){
+  const g=document.getElementById('roles-grid');
+  g.innerHTML=ROLES.map(r=>`
+    <div class="role-card glass-hover" style="border-color:rgba(255,255,255,.07)">
+      <div class="role-icon" style="background:${selGame.bg};border:1px solid ${selGame.border};color:${selGame.color}">${r.icon}</div>
+      <div style="font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:${selGame.color};margin-bottom:6px">${r.sub}</div>
+      <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff;margin-bottom:8px">${r.title}</div>
+      <div style="font-size:12px;color:rgba(226,232,240,.42);line-height:1.65">${r.desc}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CAREERS
+// ═══════════════════════════════════════════════════════════════
+let careerStep=0, careerGame=null, careerRole=null;
+
+function initCareers(){careerStep=0;careerGame=null;careerRole=null;renderCareers();}
+
+function renderCareers(){
+  const steps=[{label:'GAME'},{label:'ROLE'},{label:'APPLY'}];
+  document.getElementById('careers-steps').innerHTML=steps.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:27px;height:27px;border-radius:50%;border:2px solid ${careerStep>=i?'var(--cyan)':'rgba(255,255,255,.12)'};
+        background:${careerStep>=i?'rgba(0,240,255,.1)':'transparent'};display:flex;align-items:center;justify-content:center;
+        font-family:var(--font-hud);font-size:9px;color:${careerStep>=i?'var(--cyan)':'rgba(226,232,240,.25)'};transition:all .3s">
+        ${careerStep>i?'✓':i+1}</div>
+      <span style="font-family:var(--font-hud);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:${careerStep>=i?'rgba(0,240,255,.7)':'rgba(226,232,240,.25)'}">${s.label}</span>
+      ${i<2?`<div style="width:22px;height:1px;background:${careerStep>i?'rgba(0,240,255,.35)':'rgba(255,255,255,.07)'}"></div>`:''}
+    </div>`).join('');
+
+  const panel=document.getElementById('careers-panel');
+
+  if(careerStep===0){
+    panel.innerHTML=`
+      <p style="color:rgba(226,232,240,.42);margin-bottom:24px;font-size:14px">Which game do you want to work on?</p>
+      <div class="g2">${GAMES.map(g=>`
+        <div onclick="careerSelectGame('${g.id}')" style="cursor:pointer;padding:30px 26px;border-radius:20px;
+          background:${g.bg};border:1px solid ${g.border};transition:all .28s;
+          box-shadow:0 0 30px ${g.glow}"
+          onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+          <span style="font-size:44px;display:block;margin-bottom:16px;color:${g.color};animation:float 5s ease-in-out infinite">${g.icon}</span>
+          <div style="font-family:var(--font-hud);font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:${g.color};margin-bottom:8px">${g.genre}</div>
+          <div style="font-family:var(--font-head);font-size:22px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:-.03em;margin-bottom:6px">${g.title}</div>
+          <p style="font-size:12px;color:rgba(226,232,240,.42);line-height:1.65;margin-bottom:16px">${g.desc}</p>
+          <div style="font-family:var(--font-hud);font-size:9px;color:${g.color};letter-spacing:.12em">SELECT ›</div>
+        </div>`).join('')}</div>`;
+  }
+
+  if(careerStep===1&&careerGame){
+    panel.innerHTML=`
+      <button class="btn-ghost" onclick="careerBack(0)" style="margin-bottom:22px">← ALL GAMES</button>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;padding:14px 18px;
+        background:${careerGame.bg};border:1px solid ${careerGame.border};border-radius:14px">
+        <span style="font-size:24px;color:${careerGame.color}">${careerGame.icon}</span>
+        <span style="font-family:var(--font-head);font-weight:700;font-size:18px;text-transform:uppercase;color:#fff">${careerGame.title}</span>
+        <span style="margin-left:auto;font-family:var(--font-hud);font-size:8px;color:${careerGame.color};letter-spacing:.2em;text-transform:uppercase">${careerGame.genre}</span>
+      </div>
+      <p style="color:rgba(226,232,240,.42);margin-bottom:20px;font-size:14px">Select your role:</p>
+      <div class="gauto">${ROLES.map(r=>`
+        <div onclick="careerSelectRole('${r.id}')" class="role-card" style="cursor:pointer;border-color:rgba(255,255,255,.07)"
+          onmouseover="this.style.background='var(--glass2)';this.style.borderColor='rgba(255,255,255,.15)'"
+          onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(255,255,255,.07)'">
+          <div class="role-icon" style="background:${careerGame.bg};border:1px solid ${careerGame.border};color:${careerGame.color}">${r.icon}</div>
+          <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:#fff;margin-bottom:3px">${r.title}</div>
+          <div style="font-family:var(--font-hud);font-size:8px;color:${careerGame.color};letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px">${r.sub}</div>
+          <div style="font-size:12px;color:rgba(226,232,240,.4);line-height:1.55">${r.desc}</div>
+        </div>`).join('')}</div>`;
+  }
+
+  if(careerStep===2&&careerGame&&careerRole){
+    panel.innerHTML=`
+      <button class="btn-ghost" onclick="careerBack(1)" style="margin-bottom:22px">← BACK TO ROLES</button>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:22px">
+        <div>
+          <div class="glass hud-box" style="padding:22px 18px;margin-bottom:12px;border-color:${careerGame.border}">
+            <div class="hud" style="margin-bottom:12px">APPLYING FOR</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span style="font-size:22px;color:${careerGame.color}">${careerGame.icon}</span>
+              <span style="font-family:var(--font-head);font-weight:700;font-size:17px;text-transform:uppercase;color:#fff">${careerGame.title}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span style="font-size:15px;color:${careerGame.color}">${careerRole.icon}</span>
+              <span style="color:rgba(226,232,240,.7);font-size:14px">${careerRole.title}</span>
+            </div>
+            <div style="padding-top:12px;border-top:1px solid rgba(255,255,255,.06);color:rgba(226,232,240,.35);font-size:12px;line-height:1.6">${careerRole.desc}</div>
+          </div>
+          <div class="glass" style="padding:18px">
+            <div class="hud" style="margin-bottom:12px">PERKS</div>
+            ${['Competitive pay','Remote-friendly','Real production work','PPO eligible','Completion certificate'].map(p=>`
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;font-size:12px;color:rgba(226,232,240,.5)">
+              <span style="width:5px;height:5px;border-radius:50%;background:var(--cyan);flex-shrink:0;display:block"></span>${p}</div>`).join('')}
+          </div>
+        </div>
+        <form id="career-form" onsubmit="submitCareer(event)">
+          <div class="glass hud-box" style="padding:26px 22px;border-color:var(--cyan-border)">
+            <div class="hud" style="margin-bottom:18px">APPLICATION FORM</div>
+            <div class="g2" style="margin-bottom:13px">
+              <div>
+                <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">FULL NAME *</label>
+                <input required class="inp" name="name" placeholder="Your name">
+              </div>
+              <div>
+                <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">EMAIL *</label>
+                <input required type="email" class="inp" name="email" placeholder="you@email.com">
+              </div>
+            </div>
+            <div class="g2" style="margin-bottom:13px">
+              <div>
+                <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">PHONE</label>
+                <input type="tel" class="inp" name="phone" placeholder="+91 XXXXX XXXXX">
+              </div>
+              <div>
+                <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">EXPERIENCE *</label>
+                <select required class="inp" name="exp">
+                  <option value="fresher">Fresher</option>
+                  <option value="junior">Junior (1–3 yrs)</option>
+                  <option value="senior">Senior (3+ yrs)</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:13px">
+              <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">PORTFOLIO / GITHUB</label>
+              <input class="inp" name="portfolio" placeholder="https://yourportfolio.com">
+            </div>
+            <div style="margin-bottom:18px">
+              <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">WHY JOIN US? *</label>
+              <textarea required class="inp" name="why" placeholder="Tell us about your passion for game development..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-cyan" style="width:100%;padding:15px;font-size:11px">[ SEND APPLICATION → ]</button>
+          </div>
+        </form>
+      </div>`;
+  }
+}
+
+function careerSelectGame(id){careerGame=GAMES.find(g=>g.id===id);careerStep=1;renderCareers();}
+function careerSelectRole(id){careerRole=ROLES.find(r=>r.id===id);careerStep=2;renderCareers();}
+function careerBack(step){careerStep=step;if(step===0)careerGame=null;if(step<=1)careerRole=null;renderCareers();}
+
+function submitCareer(e){
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const app={id:Date.now().toString(),gameId:careerGame.id,gameName:careerGame.title,
+    roleId:careerRole.id,roleName:careerRole.title,
+    name:f.get('name'),email:f.get('email'),phone:f.get('phone'),
+    exp:f.get('exp'),portfolio:f.get('portfolio'),why:f.get('why'),
+    date:new Date().toISOString()};
+  db.saveApp(app);
+  const panel=document.getElementById('careers-panel');
+  panel.innerHTML=`
+    <div style="text-align:center;padding:70px 0;max-width:440px;margin:0 auto">
+      <div style="width:88px;height:88px;border-radius:50%;margin:0 auto 28px;
+        border:2px solid var(--cyan);box-shadow:0 0 32px rgba(0,240,255,.3);
+        display:flex;align-items:center;justify-content:center;font-size:36px">✓</div>
+      <h3 style="font-family:var(--font-head);font-size:40px;font-weight:800;text-transform:uppercase;letter-spacing:-.03em;color:#fff;margin-bottom:12px">Application Sent!</h3>
+      <p style="color:rgba(226,232,240,.5);line-height:1.7;margin-bottom:28px">
+        Your application for <strong style="color:var(--cyan)">${careerRole.title}</strong> on 
+        <strong style="color:${careerGame.color}">${careerGame.title}</strong> has been received. Nathan and the team respond within 7 working days.
+      </p>
+      <button class="btn btn-cyan" onclick="initCareers()" style="padding:14px 32px;font-size:11px">[ APPLY AGAIN ]</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMMUNITY
+// ═══════════════════════════════════════════════════════════════
+let commTab='submit', commType='bug', commGameId='island-darkness', commSev='medium';
+
+function initCommunity(){renderCommunity();}
+
+function renderCommunity(){
+  const panel=document.getElementById('community-panel');
+  const selG=GAMES.find(g=>g.id===commGameId);
+  const sevColors={low:'#4ade80',medium:'#fbbf24',high:'#f87171'};
+
+  const tabBar=`
+    <div style="display:flex;gap:4px;background:rgba(255,255,255,.04);padding:4px;border-radius:12px;width:fit-content;margin-bottom:38px">
+      ${[{id:'submit',label:'SUBMIT REPORT',icon:'⊕'},{id:'view',label:'VIEW REPORTS',icon:'⊜'}].map(t=>`
+      <button onclick="commSwitchTab('${t.id}')" style="
+        border:none;cursor:pointer;display:flex;align-items:center;gap:7px;
+        padding:9px 16px;border-radius:9px;
+        background:${commTab===t.id?'rgba(0,240,255,.1)':'transparent'};
+        border:1px solid ${commTab===t.id?'rgba(0,240,255,.25)':'transparent'};
+        font-family:var(--font-hud);font-size:9px;letter-spacing:.15em;
+        color:${commTab===t.id?'var(--cyan)':'rgba(226,232,240,.38)'};text-transform:uppercase;transition:all .2s">
+        <span>${t.icon}</span>${t.label}</button>`).join('')}
+    </div>`;
+
+  let content='';
+
+  if(commTab==='submit'){
+    content=`
+      <form onsubmit="submitReport(event)" style="max-width:680px;display:flex;flex-direction:column;gap:22px">
+        <!-- Type -->
+        <div>
+          <div class="hud" style="margin-bottom:14px">REPORT TYPE</div>
+          <div style="display:flex;gap:12px">
+            ${[{id:'bug',label:'BUG REPORT',icon:'⚠',c:'#f87171'},{id:'suggestion',label:'SUGGESTION',icon:'✦',c:'#a78bfa'}].map(t=>`
+            <button type="button" onclick="commSetType('${t.id}')" style="
+              flex:1;border:none;cursor:pointer;padding:20px;border-radius:14px;text-align:center;
+              background:${commType===t.id?t.c+'18':'rgba(255,255,255,.03)'};
+              border:1px solid ${commType===t.id?t.c+'55':'rgba(255,255,255,.08)'};
+              display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s">
+              <span style="font-size:24px;color:${commType===t.id?t.c:'rgba(226,232,240,.25)'}">${t.icon}</span>
+              <span style="font-family:var(--font-hud);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:${commType===t.id?t.c:'rgba(226,232,240,.28)'}">${t.label}</span>
+            </button>`).join('')}
+          </div>
+        </div>
+        <!-- Game -->
+        <div>
+          <div class="hud" style="margin-bottom:14px">RELATED GAME</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${GAMES.map(g=>`
+            <button type="button" onclick="commSetGame('${g.id}')" style="
+              border:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:11px;
+              background:${commGameId===g.id?g.bg:'transparent'};
+              border:1px solid ${commGameId===g.id?g.border:'rgba(255,255,255,.07)'};
+              font-family:var(--font-hud);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+              color:${commGameId===g.id?g.color:'rgba(226,232,240,.35)'};transition:all .2s">
+              <span>${g.icon}</span>${g.title}</button>`).join('')}
+          </div>
+        </div>
+        <!-- Fields -->
+        <div class="glass" style="padding:22px 20px;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">${commType==='bug'?'BUG TITLE *':'SUGGESTION TITLE *'}</label>
+            <input required class="inp" name="title" placeholder="${commType==='bug'?'Brief description of the bug...':'Your feature idea...'}">
+          </div>
+          <div>
+            <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">${commType==='bug'?'STEPS TO REPRODUCE *':'DETAILED DESCRIPTION *'}</label>
+            <textarea required class="inp" name="desc" placeholder="${commType==='bug'?'1. Open game\n2. Navigate to...\n3. Bug occurs when...':'Explain your idea in detail...'}"></textarea>
+          </div>
+          ${commType==='bug'?`<div>
+            <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">SEVERITY</label>
+            <div style="display:flex;gap:8px">
+              ${['low','medium','high'].map(s=>`
+              <button type="button" onclick="commSetSev('${s}')" style="
+                flex:1;text-align:center;border:none;cursor:pointer;padding:9px;border-radius:10px;
+                background:${commSev===s?sevColors[s]+'22':'transparent'};
+                border:1px solid ${commSev===s?sevColors[s]+'55':'rgba(255,255,255,.08)'};
+                font-family:var(--font-hud);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+                color:${commSev===s?sevColors[s]:'rgba(226,232,240,.3)'};transition:all .2s">
+                ${s.toUpperCase()}</button>`).join('')}
+            </div>
+          </div>`:''}
+          <div>
+            <label style="display:block;font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.3);text-transform:uppercase;margin-bottom:7px">CONTACT (OPTIONAL)</label>
+            <input class="inp" name="contact" placeholder="Email or Discord handle">
+          </div>
+        </div>
+        <button type="submit" class="btn" style="padding:15px;border-radius:11px;width:fit-content;
+          background:${commType==='bug'?'rgba(248,113,113,.1)':'rgba(167,139,250,.1)'};
+          border:1px solid ${commType==='bug'?'rgba(248,113,113,.35)':'rgba(167,139,250,.35)'};
+          color:${commType==='bug'?'#f87171':'#a78bfa'};font-size:11px;letter-spacing:.22em;padding:14px 32px">
+          [ SUBMIT ${commType==='bug'?'BUG REPORT':'SUGGESTION'} → ]</button>
+      </form>`;
+  }
+
+  if(commTab==='view'){
+    const all=db.getAllReports();
+    content=`
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center">
+        <select class="inp" style="width:auto" onchange="commFilterGame(this.value)" id="filter-game">
+          <option value="all">All Games</option>
+          ${GAMES.map(g=>`<option value="${g.id}">${g.title}</option>`).join('')}
+        </select>
+        <select class="inp" style="width:auto" onchange="commFilterType(this.value)" id="filter-type">
+          <option value="all">All Types</option>
+          <option value="bug">Bug Reports</option>
+          <option value="suggestion">Suggestions</option>
+        </select>
+        <button class="btn btn-cyan" onclick="initCommunity()" style="padding:11px 18px;font-size:9px">↻ REFRESH</button>
+        <span style="margin-left:auto;font-family:var(--font-hud);font-size:9px;color:rgba(226,232,240,.3);letter-spacing:.15em">${all.length} TOTAL REPORT${all.length!==1?'S':''}</span>
+      </div>
+      <div id="reports-list">
+        ${all.length===0?`
+        <div style="text-align:center;padding:60px 0">
+          <span style="font-size:44px;display:block;margin-bottom:16px;opacity:.25">⊘</span>
+          <p style="font-family:var(--font-hud);font-size:10px;letter-spacing:.2em;color:rgba(226,232,240,.22)">NO REPORTS YET — BE THE FIRST TO SUBMIT</p>
+        </div>`:all.map(r=>{
+          const rg=GAMES.find(g=>g.id===r.gameId);
+          const bc=r.type==='suggestion'?'#a78bfa':(sevColors[r.severity]||'#f87171');
+          return `<div class="rep-card" style="border-left-color:${bc};margin-bottom:10px">
+            <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+              <div style="flex:1">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                  <span style="color:#fff;font-weight:600;font-size:15px">${r.title||'(untitled)'}</span>
+                  ${rg?`<span class="tag" style="background:${rg.bg};border:1px solid ${rg.border};color:${rg.color}">${rg.title}</span>`:''}
+                  ${r.type==='bug'&&r.severity?`<span class="tag" style="background:${bc}22;border:1px solid ${bc}44;color:${bc}">${r.severity.toUpperCase()}</span>`:''}
+                  ${r.type==='suggestion'?`<span class="tag" style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);color:#a78bfa">✦ SUGGESTION</span>`:''}
+                </div>
+                <p style="color:rgba(226,232,240,.48);font-size:13px;line-height:1.65;white-space:pre-wrap">${r.desc||''}</p>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-family:var(--font-hud);font-size:8px;color:rgba(226,232,240,.22);letter-spacing:.1em;margin-bottom:7px">
+                  ${new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+                <span class="tag" style="background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.2);color:var(--cyan)">● OPEN</span>
+              </div>
+            </div>
+          </div>`;}).join('')}
+      </div>`;
+  }
+
+  panel.innerHTML=tabBar+content;
+}
+
+function commSwitchTab(t){commTab=t;renderCommunity();}
+function commSetType(t){commType=t;renderCommunity();}
+function commSetGame(id){commGameId=id;renderCommunity();}
+function commSetSev(s){commSev=s;renderCommunity();}
+
+function submitReport(e){
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const rg=GAMES.find(g=>g.id===commGameId);
+  const rep={id:Date.now().toString(),type:commType,gameId:commGameId,
+    gameName:rg?.title,title:f.get('title'),desc:f.get('desc'),
+    severity:commType==='bug'?commSev:'n/a',contact:f.get('contact')||'',
+    date:new Date().toISOString(),status:'open'};
+  db.saveReport(rep);
+  const panel=document.getElementById('community-panel');
+  panel.innerHTML=`
+    <div style="text-align:center;padding:70px 0;max-width:440px;margin:0 auto">
+      <div style="font-size:56px;margin-bottom:20px">${commType==='bug'?'🐛':'💡'}</div>
+      <h3 style="font-family:var(--font-head);font-size:38px;font-weight:800;text-transform:uppercase;letter-spacing:-.03em;color:#fff;margin-bottom:12px">Report Received!</h3>
+      <p style="color:rgba(226,232,240,.5);line-height:1.7;margin-bottom:28px">
+        The squad will review your ${commType==='bug'?'bug report':'suggestion'}. Thank you for making the games better!
+      </p>
+      <button class="btn btn-cyan" onclick="initCommunity()" style="padding:14px 32px;font-size:11px">[ SUBMIT ANOTHER ]</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTACT
+// ═══════════════════════════════════════════════════════════════
+function initContact(){
+  const panel=document.getElementById('contact-panel');
+  panel.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:11px">
+        ${[{icon:'☎',label:'CALL US',val:'+91 63 811 20 305'},{icon:'✉',label:'EMAIL',val:'hello@squadround.com'},{icon:'⌖',label:'STUDIO',val:'Innovation Hub, Digital District'}].map(item=>`
+        <div class="glass glass-hover hud-box" style="padding:20px 18px;display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${item.icon}</div>
+          <div>
+            <div style="font-family:var(--font-hud);font-size:8px;letter-spacing:.2em;color:rgba(226,232,240,.32);text-transform:uppercase;margin-bottom:5px">${item.label}</div>
+            <div style="color:#fff;font-size:14px;font-weight:500">${item.val}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="glass hud-box" style="padding:30px 26px">
+        <div class="hud" style="margin-bottom:22px">DIRECT MESSAGE</div>
+        <form id="contact-form" onsubmit="submitContact(event)" style="display:flex;flex-direction:column;gap:12px">
+          <input required class="inp" name="name" placeholder="Your name">
+          <input required type="email" class="inp" name="email" placeholder="your@email.com">
+          <textarea required class="inp" name="message" placeholder="Your message..."></textarea>
+          <button type="submit" class="btn btn-cyan" style="width:100%;padding:14px;font-size:11px">[ SEND MESSAGE → ]</button>
+        </form>
+      </div>
+    </div>`;
+}
+
+function submitContact(e){
+  e.preventDefault();
+  const f=new FormData(e.target);
+  db.saveContact({id:Date.now().toString(),name:f.get('name'),email:f.get('email'),message:f.get('message'),date:new Date().toISOString()});
+  document.getElementById('contact-panel').innerHTML=`
+    <div style="text-align:center;padding:70px 0;max-width:400px;margin:0 auto">
+      <div style="font-size:52px;margin-bottom:18px">✓</div>
+      <h3 style="font-family:var(--font-head);font-size:36px;font-weight:800;text-transform:uppercase;color:#fff;margin-bottom:12px">Message Sent!</h3>
+      <p style="color:rgba(226,232,240,.5);margin-bottom:26px">We'll get back to you soon!</p>
+      <button class="btn btn-cyan" onclick="initContact()" style="padding:13px 28px;font-size:11px">[ SEND ANOTHER ]</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CURSOR
+// ═══════════════════════════════════════════════════════════════
+const cur=document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{
+  cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';
+});
+document.addEventListener('mousedown',()=>cur.style.transform='translate(-50%,-50%) scale(.7)');
+document.addEventListener('mouseup',()=>cur.style.transform='translate(-50%,-50%) scale(1)');
+
+// ═══════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════
+buildNav();
+initHome();
+</script>
+</body>
+</html>
